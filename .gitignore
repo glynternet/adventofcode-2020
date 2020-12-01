@@ -1,0 +1,5 @@
+.idea
+node_modules
+elm.json
+index.html
+elm-stuff
