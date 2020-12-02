@@ -1,7 +1,8 @@
 module Day2 exposing (main)
 
 import Browser
-import Html exposing (Html, div, text)
+import Html exposing (Html, div, node, text)
+import Html.Attributes exposing (href, rel)
 
 
 main =
@@ -60,7 +61,8 @@ part2ValidValues model =
 
 view model =
     div [] <|
-        [ div [] [ text "Part 1" ] ]
+        [ css "/style.css" ]
+            ++ [ div [] [ text "Part 1" ] ]
             ++ partView model part1 (Just "625")
             --++ (passingDay1
             --        |> List.map
@@ -96,6 +98,10 @@ view model =
                                 ]
                         )
                )
+
+
+css path =
+    node "link" [ rel "stylesheet", href path ] []
 
 
 partView : model -> (model -> String) -> Maybe String -> List (Html Msg)
