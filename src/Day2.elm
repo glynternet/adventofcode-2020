@@ -22,33 +22,46 @@ update msg model =
             model
 
 
-view model =
-    let
-        passingDay1 =
-            model
-                |> List.map
-                    (\( limits, letter, string ) ->
-                        ( limits, ( letter, charCount letter string ), string )
-                    )
-                |> List.filter
-                    (\( ( min, max ), ( letter, count ), string ) ->
-                        count >= min && count <= max
-                    )
+part1 : List ( ( Int, Int ), Char, String ) -> String
+part1 model =
+    model
+        |> List.map
+            (\( limits, letter, string ) ->
+                ( limits, ( letter, charCount letter string ), string )
+            )
+        |> List.filter
+            (\( ( min, max ), ( letter, count ), string ) ->
+                count >= min && count <= max
+            )
+        |> List.length
+        |> String.fromInt
 
-        passingDay2 =
-            model
-                |> List.map
-                    (\( ( first, second ), letter, string ) ->
-                        ( ( first, second ), ( letter, String.indexes (String.fromChar letter) string ), string )
-                    )
-                |> List.filter
-                    (\( ( first, second ), ( letter, indices ), string ) ->
-                        List.member (first - 1) indices /= List.member (second - 1) indices
-                    )
-    in
+
+part2 : List ( ( Int, Int ), Char, String ) -> String
+part2 model =
+    model
+        |> part2ValidValues
+        |> List.length
+        |> String.fromInt
+
+
+part2ValidValues : List ( ( Int, Int ), Char, String ) -> List ( ( Int, Int ), ( Char, List Int ), String )
+part2ValidValues model =
+    model
+        |> List.map
+            (\( ( first, second ), letter, string ) ->
+                ( ( first, second ), ( letter, String.indexes (String.fromChar letter) string ), string )
+            )
+        |> List.filter
+            (\( ( first, second ), ( letter, indices ), string ) ->
+                List.member (first - 1) indices /= List.member (second - 1) indices
+            )
+
+
+view model =
     div [] <|
         [ div [] [ text "Part 1" ] ]
-            ++ [ List.length passingDay1 |> String.fromInt |> text ]
+            ++ partView model part1 (Just "625")
             --++ (passingDay1
             --        |> List.map
             --            (\( ( min, max ), ( letter, count ), string ) ->
@@ -65,10 +78,9 @@ view model =
             --            )
             --   )
             ++ [ div [] [ text "Part 2" ] ]
-            ++ [ List.length passingDay2 |> String.fromInt |> text ]
-            ++ [ div [] [ passingDay2 |> List.length |> String.fromInt |> text ] ]
+            ++ partView model part2 (Just "391")
             ++ [ div [] [ text "Part 2 Values" ] ]
-            ++ (passingDay2
+            ++ (part2ValidValues model
                     |> List.map
                         (\( ( first, second ), ( letter, indices ), string ) ->
                             div []
@@ -84,6 +96,29 @@ view model =
                                 ]
                         )
                )
+
+
+partView : model -> (model -> String) -> Maybe String -> List (Html Msg)
+partView model solve expected =
+    let
+        answer =
+            solve model
+    in
+    expected
+        |> Maybe.map (\e -> checkExpected e answer)
+        |> Maybe.withDefault answer
+        |> (\str -> [ text str ])
+        |> div []
+        |> List.singleton
+
+
+checkExpected : String -> String -> String
+checkExpected expected actual =
+    if expected /= actual then
+        "Expected " ++ expected ++ " but got " ++ actual
+
+    else
+        actual
 
 
 charCount : Char -> String -> Int
