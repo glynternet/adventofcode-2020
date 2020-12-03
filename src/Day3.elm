@@ -38,19 +38,48 @@ trees mapLines =
         |> List.concat
 
 
-part1 : ( XY, XY, List String ) -> String
-part1 ( start, direction, mapRows ) =
-    mapRows
-        |> trees
-        |> List.length
+part1 : ( XY, List String ) -> String
+part1 ( start, mapRows ) =
+    clashes ( start, XY 3 1, mapRows )
         |> String.fromInt
 
 
-part2 : List String -> String
-part2 model =
-    model
-        |> List.length
+part2 : ( XY, List String ) -> String
+part2 ( start, mapRows ) =
+    --Right 1, down 1.
+    --Right 3, down 1.
+    --Right 5, down 1.
+    --Right 7, down 1.
+    --Right 1, down 2.
+    [ XY 1 1, XY 3 1, XY 5 1, XY 7 1, XY 1 2 ]
+        |> List.map (\dir -> clashes ( start, dir, mapRows ))
+        |> List.product
         |> String.fromInt
+
+
+clashes ( start, direction, mapRows ) =
+    let
+        height =
+            Debug.log "mapHeight" <| mapHeight mapRows
+
+        width =
+            Debug.log "mapWidth" <| mapWidth mapRows
+    in
+    inputSledPositions ( start, direction, mapRows )
+        |> List.map
+            (\pos ->
+                trees mapRows
+                    |> List.filter
+                        (\tree ->
+                            tree.y
+                                == modBy height pos.y
+                                && tree.x
+                                == modBy width pos.x
+                        )
+                    |> (\matches -> List.length matches == 1)
+            )
+        |> List.filter (\b -> b)
+        |> List.length
 
 
 mapWidth : List String -> Int
@@ -63,52 +92,42 @@ mapHeight mapRows =
     List.length mapRows
 
 
-view ( start, direction, treeRows ) =
+
+--type alias Day =
+--    { part1 : model -> String
+--    }
+
+
+dayView :
+    { input : model
+    , part1 : model -> String
+    , part1Expected : Maybe String
+    , part2 : model -> String
+    , part2Expected : Maybe String
+    }
+    -> List (Html Msg)
+dayView day =
+    [ div [] [ text "Part 1" ] ]
+        ++ partView day.input day.part1 day.part1Expected
+        ++ [ div [] [ text "Part 2" ] ]
+        ++ partView day.input day.part2 day.part2Expected
+
+
+view ( start, treeRows ) =
     let
         treesByRow =
             treesByRowDict <| trees treeRows
-
-        height =
-            Debug.log "mapHeight" <| mapHeight treeRows
-
-        width =
-            Debug.log "mapWidth" <| mapWidth treeRows
     in
     div [] <|
         [ css "/style.css" ]
-            ++ [ div [] [ text "Part 1" ] ]
-            ++ partView ( start, direction, treeRows ) part1 Nothing
+            ++ dayView
+                { input = ( start, treeRows )
+                , part1 = part1
+                , part1Expected = Just "265"
+                , part2 = part2
+                , part2Expected = Just "3154761400"
+                }
             ++ [ div [] [ text "Part 1 Map" ] ]
-            ++ [ div [] [ inputSledPositions ( start, direction, treeRows ) |> List.length |> String.fromInt |> text ] ]
-            ++ [ div [] (inputSledPositions ( start, direction, treeRows ) |> List.map (\pos -> div [] [ text <| positionStr pos ])) ]
-            ++ [ div []
-                    [ inputSledPositions ( start, direction, treeRows )
-                        |> List.map
-                            (\pos ->
-                                trees treeRows
-                                    |> List.filter
-                                        (\tree ->
-                                            tree.y
-                                                == modBy height pos.y
-                                                && tree.x
-                                                == modBy width pos.x
-                                        )
-                                    |> (\matches -> List.length matches == 1)
-                            )
-                        --|> List.map (\matches -> div [] [ text <| String.join "\t" (matches |> List.map positionStr) ])
-                        |> List.filter (\b -> b)
-                        |> List.map
-                            (\boool ->
-                                if boool then
-                                    div [] [ text "T" ]
-
-                                else
-                                    div [] [ text "F" ]
-                            )
-                        |> List.length
-                        |> (\len -> div [] [ text <| String.fromInt len ])
-                    ]
-               ]
             ++ (treeRows
                     |> List.indexedMap
                         (\i mapRow ->
@@ -130,7 +149,6 @@ view ( start, direction, treeRows ) =
             ++ [ div [] [ text "Part 1 Trees'" ] ]
             ++ (trees treeRows |> List.map (\tree -> div [] [ text <| positionStr tree ]))
             ++ [ div [] [ text "Part 2" ] ]
-            ++ partView treeRows part2 Nothing
 
 
 inputSledPositions : ( XY, XY, List String ) -> List XY
@@ -213,10 +231,9 @@ entrylistToMultiDict entries =
         entries
 
 
-inputTest : ( XY, XY, List String )
+inputTest : ( XY, List String )
 inputTest =
     ( XY 0 0
-    , XY 3 1
     , [ "..##......."
       , "#...#...#.."
       , ".#....#..#."
@@ -232,10 +249,9 @@ inputTest =
     )
 
 
-inputReal : ( XY, XY, List String )
+inputReal : ( XY, List String )
 inputReal =
     ( XY 0 0
-    , XY 3 1
     , [ ".##......#.##..#..#..##....#..."
       , "...##.....#...###........###..."
       , "#....##....#.....#.....#..##.##"
