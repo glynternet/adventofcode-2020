@@ -2,26 +2,16 @@ module Day3 exposing (main)
 
 import Browser
 import Dict
-import Html exposing (Html, div, node, text)
-import Html.Attributes exposing (href, rel)
+import Html exposing (Html, div, text)
+import View
 
 
 main =
     Browser.sandbox
         { init = inputReal
         , view = view
-        , update = update
+        , update = \_ model -> model
         }
-
-
-type Msg
-    = Update
-
-
-update msg model =
-    case msg of
-        Update ->
-            model
 
 
 type alias XY =
@@ -92,41 +82,19 @@ mapHeight mapRows =
     List.length mapRows
 
 
-
---type alias Day =
---    { part1 : model -> String
---    }
-
-
-dayView :
-    { input : model
-    , part1 : model -> String
-    , part1Expected : Maybe String
-    , part2 : model -> String
-    , part2Expected : Maybe String
-    }
-    -> List (Html Msg)
-dayView day =
-    [ div [] [ text "Part 1" ] ]
-        ++ partView day.input day.part1 day.part1Expected
-        ++ [ div [] [ text "Part 2" ] ]
-        ++ partView day.input day.part2 day.part2Expected
-
-
 view ( start, treeRows ) =
     let
         treesByRow =
             treesByRowDict <| trees treeRows
     in
-    div [] <|
-        [ css "/style.css" ]
-            ++ dayView
-                { input = ( start, treeRows )
-                , part1 = part1
-                , part1Expected = Just "265"
-                , part2 = part2
-                , part2Expected = Just "3154761400"
-                }
+    View.page <|
+        View.dayView
+            { input = ( start, treeRows )
+            , part1 = part1
+            , part1Expected = Just "265"
+            , part2 = part2
+            , part2Expected = Just "3154761400"
+            }
             ++ [ div [] [ text "Part 1 Map" ] ]
             ++ (treeRows
                     |> List.indexedMap
@@ -180,33 +148,6 @@ treesByRowDict positions =
 positionStr : XY -> String
 positionStr pos =
     "(" ++ String.fromInt pos.x ++ "," ++ String.fromInt pos.y ++ ")"
-
-
-css path =
-    node "link" [ rel "stylesheet", href path ] []
-
-
-partView : model -> (model -> String) -> Maybe String -> List (Html Msg)
-partView model solve expected =
-    let
-        answer =
-            solve model
-    in
-    expected
-        |> Maybe.map (\e -> checkExpected e answer)
-        |> Maybe.withDefault answer
-        |> (\str -> [ text str ])
-        |> div []
-        |> List.singleton
-
-
-checkExpected : String -> String -> String
-checkExpected expected actual =
-    if expected /= actual then
-        "Expected " ++ expected ++ " but got " ++ actual
-
-    else
-        actual
 
 
 listToMultiDict : (thing -> comparable) -> List thing -> Dict.Dict comparable (List thing)
