@@ -1,5 +1,21 @@
 * {
-    font-family: monospace;
+    background: #0f0f23; /*337 x 5*/
+    color: #cccccc;
+    font-family: "Source Code Pro", monospace;
+    font-size: 14pt;
+    min-width: 60em;
+}
+
+.grey {
+    color: #cccccc;
+}
+
+.red {
+    color: #ffaaaa;
+}
+
+.gold {
+    color: #ffff66;
 }
 
 div {
@@ -8,3 +24,4 @@ div {
     border-color: lightgrey;
     padding: 4px;
 }
+

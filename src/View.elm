@@ -6,31 +6,50 @@ import Html.Attributes as Attributes
 
 dayView :
     { input : model
+    , testInput : model
     , part1 : model -> String
+    , part1TestExpected : Maybe String
     , part1Expected : Maybe String
     , part2 : model -> String
     , part2Expected : Maybe String
     }
     -> List (Html msg)
 dayView day =
-    [ div [] [ text "Part 1" ] ]
-        ++ partView day.input day.part1 day.part1Expected
-        ++ [ div [] [ text "Part 2" ] ]
-        ++ partView day.input day.part2 day.part2Expected
+    [ partView "Test 1" day.testInput day.part1 day.part1TestExpected
+    , partView "Part 1" day.input day.part1 day.part1Expected
+    , partView "Part 2" day.input day.part2 day.part2Expected
+    ]
 
 
-partView : model -> (model -> String) -> Maybe String -> List (Html msg)
-partView model solve expected =
+partView : String -> model -> (model -> String) -> Maybe String -> Html msg
+partView name model solve maybeExpected =
     let
         answer =
             solve model
     in
-    expected
+    maybeExpected
         |> Maybe.map (\e -> checkExpected e answer)
         |> Maybe.withDefault answer
-        |> (\str -> [ text str ])
-        |> div []
-        |> List.singleton
+        |> (\str ->
+                div
+                    [ Attributes.class
+                        (maybeExpected
+                            |> Maybe.map
+                                (\expected ->
+                                    if expected == answer then
+                                        "gold"
+
+                                    else
+                                        "red"
+                                )
+                            |> Maybe.withDefault "grey"
+                        )
+                    ]
+                    [ text name
+                    , Html.br [] []
+                    , text str
+                    ]
+           )
 
 
 checkExpected : String -> String -> String
@@ -44,7 +63,10 @@ checkExpected expected actual =
 
 page : List (Html msg) -> Html msg
 page content =
-    div [] (css "/style.css" :: content)
+    div []
+        (css "/style.css"
+            :: content
+        )
 
 
 css path =

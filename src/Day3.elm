@@ -116,7 +116,6 @@ view ( start, treeRows ) =
                )
             ++ [ div [] [ text "Part 1 Trees'" ] ]
             ++ (trees treeRows |> List.map (\tree -> div [] [ text <| positionStr tree ]))
-            ++ [ div [] [ text "Part 2" ] ]
 
 
 inputSledPositions : ( XY, XY, List String ) -> List XY
