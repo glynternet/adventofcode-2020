@@ -4,6 +4,7 @@
     font-family: "Source Code Pro", monospace;
     font-size: 14pt;
     min-width: 60em;
+    white-space: pre;
 }
 
 .grey {

@@ -92,23 +92,24 @@ debugTrees ( start, treeRows ) =
         treesByRow =
             treesByRowDict <| trees treeRows
     in
-    [ ( Just "Part 1 Map", "" ) ]
-        ++ (treeRows
-                |> List.indexedMap
-                    (\i mapRow ->
-                        mapRow
-                            ++ "\ty:"
-                            ++ String.fromInt i
-                            ++ " | \t"
-                            ++ String.join "\t"
-                                (Dict.get i treesByRow
-                                    |> Maybe.map (List.map positionStr)
-                                    |> Maybe.map List.reverse
-                                    |> Maybe.withDefault []
-                                )
-                    )
-                |> List.map (\str -> ( Nothing, str ))
-           )
+    [ ( Just "Part 1 Map"
+      , treeRows
+            |> List.indexedMap
+                (\i mapRow ->
+                    mapRow
+                        ++ "\ty:"
+                        ++ String.fromInt i
+                        ++ " | \t"
+                        ++ String.join "\t"
+                            (Dict.get i treesByRow
+                                |> Maybe.map (List.map positionStr)
+                                |> Maybe.map List.reverse
+                                |> Maybe.withDefault []
+                            )
+                )
+            |> String.join "\n"
+      )
+    ]
         ++ [ ( Just "Part 1 Trees'", "" ) ]
         ++ (trees treeRows |> List.map (\tree -> ( Just "Tree pos", positionStr tree )))
 
