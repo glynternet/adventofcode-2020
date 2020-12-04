@@ -1,10 +1,20 @@
-module View exposing (dayView, page)
+module AdventOfCode exposing (day)
 
+import Browser
 import Html exposing (Html, div, text)
 import Html.Attributes as Attributes
 
 
-dayView :
+day : Day model -> Program () (Day model) msg
+day impl =
+    Browser.sandbox
+        { init = impl
+        , view = view
+        , update = \_ model -> model
+        }
+
+
+type alias Day model =
     { input : model
     , testInput : model
     , part1 : model -> String
@@ -12,13 +22,31 @@ dayView :
     , part1Expected : Maybe String
     , part2 : model -> String
     , part2Expected : Maybe String
+    , debugWindows : model -> List ( Maybe String, String )
     }
-    -> List (Html msg)
-dayView day =
-    [ partView "Test 1" day.testInput day.part1 day.part1TestExpected
-    , partView "Part 1" day.input day.part1 day.part1Expected
-    , partView "Part 2" day.input day.part2 day.part2Expected
-    ]
+
+
+view : Day model -> Html msg
+view dayModel =
+    div []
+        (css "/style.css"
+            :: [ partView "Test 1" dayModel.testInput dayModel.part1 dayModel.part1TestExpected
+               , partView "Part 1" dayModel.input dayModel.part1 dayModel.part1Expected
+               , partView "Part 2" dayModel.input dayModel.part2 dayModel.part2Expected
+               ]
+            ++ (dayModel.debugWindows dayModel.input
+                    |> List.map
+                        (\( title, str ) ->
+                            div []
+                                ((title
+                                    |> Maybe.map (\t -> [ text t, Html.br [] [] ])
+                                    |> Maybe.withDefault []
+                                 )
+                                    ++ [ text <| str ]
+                                )
+                        )
+               )
+        )
 
 
 partView : String -> model -> (model -> String) -> Maybe String -> Html msg
@@ -59,14 +87,6 @@ checkExpected expected actual =
 
     else
         actual
-
-
-page : List (Html msg) -> Html msg
-page content =
-    div []
-        (css "/style.css"
-            :: content
-        )
 
 
 css path =

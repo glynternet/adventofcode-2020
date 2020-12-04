@@ -1,16 +1,20 @@
 module Day3 exposing (main)
 
-import Browser
+import AdventOfCode
 import Dict
-import Html exposing (Html, div, text)
-import View
+import MultiDict
 
 
 main =
-    Browser.sandbox
-        { init = inputReal
-        , view = view
-        , update = \_ model -> model
+    AdventOfCode.day
+        { input = inputReal
+        , testInput = inputTest
+        , part1 = part1
+        , part1Expected = Just "265"
+        , part1TestExpected = Nothing
+        , part2 = part2
+        , part2Expected = Just "3154761400"
+        , debugWindows = debugTrees
         }
 
 
@@ -82,40 +86,31 @@ mapHeight mapRows =
     List.length mapRows
 
 
-view ( start, treeRows ) =
+debugTrees : ( XY, List String ) -> List ( Maybe String, String )
+debugTrees ( start, treeRows ) =
     let
         treesByRow =
             treesByRowDict <| trees treeRows
     in
-    View.page <|
-        View.dayView
-            { input = ( start, treeRows )
-            , part1 = part1
-            , part1Expected = Just "265"
-            , part2 = part2
-            , part2Expected = Just "3154761400"
-            }
-            ++ [ div [] [ text "Part 1 Map" ] ]
-            ++ (treeRows
-                    |> List.indexedMap
-                        (\i mapRow ->
-                            div []
-                                [ text <|
-                                    mapRow
-                                        ++ "\ty:"
-                                        ++ String.fromInt i
-                                        ++ " | \t"
-                                        ++ String.join "\t"
-                                            (Dict.get i treesByRow
-                                                |> Maybe.map (List.map positionStr)
-                                                |> Maybe.map List.reverse
-                                                |> Maybe.withDefault []
-                                            )
-                                ]
-                        )
-               )
-            ++ [ div [] [ text "Part 1 Trees'" ] ]
-            ++ (trees treeRows |> List.map (\tree -> div [] [ text <| positionStr tree ]))
+    [ ( Just "Part 1 Map", "" ) ]
+        ++ (treeRows
+                |> List.indexedMap
+                    (\i mapRow ->
+                        mapRow
+                            ++ "\ty:"
+                            ++ String.fromInt i
+                            ++ " | \t"
+                            ++ String.join "\t"
+                                (Dict.get i treesByRow
+                                    |> Maybe.map (List.map positionStr)
+                                    |> Maybe.map List.reverse
+                                    |> Maybe.withDefault []
+                                )
+                    )
+                |> List.map (\str -> ( Nothing, str ))
+           )
+        ++ [ ( Just "Part 1 Trees'", "" ) ]
+        ++ (trees treeRows |> List.map (\tree -> ( Just "Tree pos", positionStr tree )))
 
 
 inputSledPositions : ( XY, XY, List String ) -> List XY
@@ -141,34 +136,12 @@ treesByRowDict : List XY -> Dict.Dict Int (List XY)
 treesByRowDict positions =
     --foldl : (a -> b -> b) -> b -> List a -> b
     positions
-        |> listToMultiDict .y
+        |> MultiDict.fromList .y
 
 
 positionStr : XY -> String
 positionStr pos =
     "(" ++ String.fromInt pos.x ++ "," ++ String.fromInt pos.y ++ ")"
-
-
-listToMultiDict : (thing -> comparable) -> List thing -> Dict.Dict comparable (List thing)
-listToMultiDict map things =
-    things
-        |> List.map (\thing -> ( map thing, thing ))
-        |> entrylistToMultiDict
-
-
-entrylistToMultiDict : List ( comparable, thing ) -> Dict.Dict comparable (List thing)
-entrylistToMultiDict entries =
-    List.foldl
-        (\( key, value ) currDict ->
-            Dict.get key currDict
-                |> Maybe.map
-                    (\currEntries ->
-                        Dict.insert key (value :: currEntries) currDict
-                    )
-                |> Maybe.withDefault (Dict.insert key [ value ] currDict)
-        )
-        Dict.empty
-        entries
 
 
 inputTest : ( XY, List String )

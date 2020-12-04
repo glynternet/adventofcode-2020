@@ -1,16 +1,20 @@
 module Day4 exposing (main)
 
+import AdventOfCode
 import Browser
 import Dict
-import Html exposing (Html, div, text)
-import View
 
 
 main =
-    Browser.sandbox
-        { init = inputReal
-        , view = view
-        , update = \_ model -> model
+    AdventOfCode.day
+        { input = inputReal
+        , testInput = inputTest
+        , part1 = part1
+        , part1TestExpected = Just "2"
+        , part1Expected = Just "190"
+        , part2 = part2
+        , part2Expected = Just "121"
+        , debugWindows = \_ -> []
         }
 
 
@@ -175,15 +179,6 @@ part2ValidatePassport passportFields =
             |> List.all (\b -> b)
 
 
-
---debugIfTrue msg val tr =
---    if tr then
---        Debug.log msg val
---
---    else
---        val
-
-
 validateHeight : String -> Bool
 validateHeight heightStr =
     case String.toList heightStr |> List.reverse of
@@ -234,41 +229,6 @@ validateHaircolour hcl =
 
         _ ->
             False
-
-
-view input =
-    View.page <|
-        View.dayView
-            { input = input
-            , testInput = inputTest
-            , part1 = part1
-            , part1TestExpected = Just "2"
-            , part1Expected = Just "190"
-            , part2 = part2
-            , part2Expected = Just "121"
-            }
-
-
-listToMultiDict : (thing -> comparable) -> List thing -> Dict.Dict comparable (List thing)
-listToMultiDict map things =
-    things
-        |> List.map (\thing -> ( map thing, thing ))
-        |> entrylistToMultiDict
-
-
-entrylistToMultiDict : List ( comparable, thing ) -> Dict.Dict comparable (List thing)
-entrylistToMultiDict entries =
-    List.foldl
-        (\( key, value ) currDict ->
-            Dict.get key currDict
-                |> Maybe.map
-                    (\currEntries ->
-                        Dict.insert key (value :: currEntries) currDict
-                    )
-                |> Maybe.withDefault (Dict.insert key [ value ] currDict)
-        )
-        Dict.empty
-        entries
 
 
 inputTest : String
