@@ -16,6 +16,15 @@ main =
 
 part1 : String -> String
 part1 input =
+    validPassportCount input part1ValidatePassport
+
+
+part2 : String -> String
+part2 input =
+    validPassportCount input part2ValidatePassport
+
+
+validPassportCount input validatePassport =
     String.split "\n\n" input
         |> List.map (String.split "\n")
         |> List.map (\passportLines -> passportLines |> List.map (String.split " ") |> List.concat)
@@ -38,7 +47,7 @@ part1 input =
                         )
                     |> Dict.fromList
             )
-        |> List.filter part1ValidatePassport
+        |> List.filter validatePassport
         |> List.length
         |> String.fromInt
 
@@ -63,9 +72,168 @@ part1ValidatePassport passportFields =
         |> List.all (\res -> res)
 
 
-part2 : String -> String
-part2 _ =
-    "nope"
+part2ValidatePassport : Dict.Dict String String -> Bool
+part2ValidatePassport passportFields =
+    let
+        requiredFields =
+            [ "byr", "iyr", "eyr", "hgt", "hcl", "ecl", "pid" ]
+
+        hasRequiredFields =
+            requiredFields
+                |> List.map (\field -> Dict.get field passportFields |> Maybe.map (\value -> ( field, value )))
+                |> List.map
+                    (\res ->
+                        case res of
+                            Just _ ->
+                                True
+
+                            Nothing ->
+                                False
+                    )
+                |> List.all (\res -> res)
+
+        fieldValidations =
+            Dict.fromList
+                [ ( "foo", \_ -> True )
+                , ( "byr"
+                  , \byr -> String.length byr == 4 && (String.toInt byr |> Maybe.map (\yr -> yr >= 1920 && yr <= 2002) |> Maybe.withDefault False)
+                  )
+                , ( "iyr"
+                  , \iyr -> String.length iyr == 4 && (String.toInt iyr |> Maybe.map (\yr -> yr >= 2010 && yr <= 2020) |> Maybe.withDefault False)
+                  )
+                , ( "eyr"
+                  , \eyr -> String.length eyr == 4 && (String.toInt eyr |> Maybe.map (\yr -> yr >= 2020 && yr <= 2030) |> Maybe.withDefault False)
+                  )
+                , ( "hgt"
+                  , \h ->
+                        let
+                            valid =
+                                validateHeight h
+
+                            _ =
+                                Debug.log ("height" ++ h) valid
+                        in
+                        valid
+                  )
+                , ( "hcl"
+                  , \h ->
+                        let
+                            valid =
+                                validateHaircolour h
+
+                            _ =
+                                Debug.log ("hair " ++ h) valid
+                        in
+                        valid
+                  )
+                , ( "ecl"
+                  , \e -> List.member e [ "amb", "blu", "brn", "gry", "grn", "hzl", "oth" ]
+                  )
+                , ( "pid"
+                  , \e ->
+                        e
+                            |> String.toList
+                            |> List.map
+                                (\char ->
+                                    List.member char [ '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' ]
+                                )
+                            |> (\digits -> List.length digits == 9 && List.all identity digits)
+                  )
+                ]
+    in
+    if not hasRequiredFields then
+        False
+
+    else
+        requiredFields
+            |> List.map
+                (\field ->
+                    case Dict.get field fieldValidations of
+                        Nothing ->
+                            let
+                                _ =
+                                    Debug.log "no validation" field
+                            in
+                            False
+
+                        Just validation ->
+                            let
+                                maybeValue =
+                                    Dict.get field passportFields
+                            in
+                            case maybeValue of
+                                Nothing ->
+                                    let
+                                        _ =
+                                            Debug.log "expected field but not present in passport" field
+                                    in
+                                    False
+
+                                Just value ->
+                                    validation value
+                )
+            |> List.all (\b -> b)
+
+
+
+--debugIfTrue msg val tr =
+--    if tr then
+--        Debug.log msg val
+--
+--    else
+--        val
+
+
+validateHeight : String -> Bool
+validateHeight heightStr =
+    case String.toList heightStr |> List.reverse of
+        'm' :: 'c' :: others ->
+            List.reverse others
+                |> String.fromList
+                |> String.toInt
+                |> Maybe.map (\cm -> cm >= 150 && cm <= 193)
+                |> Maybe.withDefault False
+
+        'n' :: 'i' :: others ->
+            List.reverse others
+                |> String.fromList
+                |> String.toInt
+                |> Maybe.map (\inch -> inch >= 59 && inch <= 76)
+                |> Maybe.withDefault False
+
+        _ ->
+            False
+
+
+validateHaircolour hcl =
+    case String.toList hcl of
+        '#' :: colour ->
+            colour
+                |> List.map
+                    (\d ->
+                        List.member d
+                            [ '0'
+                            , '1'
+                            , '2'
+                            , '3'
+                            , '4'
+                            , '5'
+                            , '6'
+                            , '7'
+                            , '8'
+                            , '9'
+                            , 'a'
+                            , 'b'
+                            , 'c'
+                            , 'd'
+                            , 'e'
+                            , 'f'
+                            ]
+                    )
+                |> List.all identity
+
+        _ ->
+            False
 
 
 view input =
@@ -77,7 +245,7 @@ view input =
             , part1TestExpected = Just "2"
             , part1Expected = Just "190"
             , part2 = part2
-            , part2Expected = Nothing
+            , part2Expected = Just "121"
             }
 
 
