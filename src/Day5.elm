@@ -4,6 +4,7 @@ import AdventOfCode
 import Binary
 import Browser
 import Dict
+import Result.Extra as Result
 
 
 main =
@@ -26,12 +27,7 @@ rowWidth =
 
 part1 : List String -> String
 part1 input =
-    case part1Solve input of
-        Ok answer ->
-            answer
-
-        Err err ->
-            err
+    part1Solve input |> Result.merge
 
 
 part1Solve : List String -> Result String String
@@ -73,12 +69,10 @@ codeToNumber highChar code =
 
 part2 : List String -> String
 part2 input =
-    case findMine <| boardingPassIds input of
-        Ok mine ->
-            String.fromInt mine
-
-        Err err ->
-            err
+    boardingPassIds input
+        |> findMine
+        |> Result.map String.fromInt
+        |> Result.merge
 
 
 findMine : List Int -> Result String Int
