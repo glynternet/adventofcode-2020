@@ -52,14 +52,14 @@ boardingPassIds passes =
 
 boardingPassToId : String -> Int
 boardingPassToId pass =
-    ( pass |> String.dropRight 3 |> codeToNumber 'B'
-    , pass |> String.dropLeft 7 |> codeToNumber 'R'
+    ( pass |> String.dropRight 3 |> codeToId 'B'
+    , pass |> String.dropLeft 7 |> codeToId 'R'
     )
         |> (\( r, c ) -> r * rowWidth + c)
 
 
-codeToNumber : Char -> String -> Int
-codeToNumber highChar code =
+codeToId : Char -> String -> Int
+codeToId highChar code =
     code
         |> String.toList
         |> List.map ((==) highChar)
