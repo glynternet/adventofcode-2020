@@ -14,7 +14,7 @@ main =
         , part1TestExpected = Just "820"
         , part1Expected = Just "959"
         , part2 = part2
-        , part2Expected = Nothing
+        , part2Expected = Just "527"
         , debugWindows = \_ -> []
         }
 
@@ -41,20 +41,25 @@ part1Solve input =
 
     else
         input
-            |> List.map
-                (\pass ->
-                    ( pass |> String.dropRight 3 |> codeToNumber 'B'
-                    , pass |> String.dropLeft 7 |> codeToNumber 'R'
-                    )
-                )
-            |> List.map (\( r, c ) -> r * rowWidth + c)
+            |> boardingPassIds
             |> List.sort
             |> List.reverse
             |> List.head
             |> Result.fromMaybe "No highest value"
-            --|> List.map (\( r, c ) -> String.fromInt r ++ "," ++ String.fromInt c ++ "=" ++ String.fromInt (r * rowWidth + c))
-            --|> String.join "\t"
             |> Result.map String.fromInt
+
+
+boardingPassIds : List String -> List Int
+boardingPassIds passes =
+    List.map boardingPassToId passes
+
+
+boardingPassToId : String -> Int
+boardingPassToId pass =
+    ( pass |> String.dropRight 3 |> codeToNumber 'B'
+    , pass |> String.dropLeft 7 |> codeToNumber 'R'
+    )
+        |> (\( r, c ) -> r * rowWidth + c)
 
 
 codeToNumber : Char -> String -> Int
@@ -68,7 +73,29 @@ codeToNumber highChar code =
 
 part2 : List String -> String
 part2 input =
-    ""
+    case findMine <| boardingPassIds input of
+        Ok mine ->
+            String.fromInt mine
+
+        Err err ->
+            err
+
+
+findMine : List Int -> Result String Int
+findMine ids =
+    case ids |> List.sort of
+        [] ->
+            Err "Ended with no elements"
+
+        [ _ ] ->
+            Err "Ended with single elements"
+
+        el0 :: el1 :: others ->
+            if el0 == el1 - 2 then
+                Ok <| el0 + 1
+
+            else
+                findMine (el1 :: others)
 
 
 inputTest : List String
