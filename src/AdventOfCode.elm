@@ -32,10 +32,7 @@ view dayModel =
     div [ Attributes.class "page" ]
         (css "/style.css"
             :: div [] [ dayModel.dayNumber |> String.fromInt |> (++) "Day " |> text ]
-            :: [ partView "Test 1" dayModel.testInput dayModel.part1 dayModel.part1TestExpected
-               , partView "Part 1" dayModel.input dayModel.part1 dayModel.part1Expected
-               , partView "Part 2" dayModel.input dayModel.part2 dayModel.part2Expected
-               ]
+            :: partViews dayModel
             ++ (dayModel.debugWindows dayModel.input
                     |> List.map
                         (\( title, str ) ->
@@ -51,12 +48,30 @@ view dayModel =
         )
 
 
-partView : String -> model -> (model -> String) -> Maybe String -> Html msg
-partView name model solve maybeExpected =
+partViews : Day model -> List (Html msg)
+partViews dayModel =
     let
-        answer =
-            solve model
+        part1Answer =
+            dayModel.part1 dayModel.input
+
+        part1Passed =
+            dayModel.part1Expected
+                |> Maybe.map (\expected -> expected == part1Answer)
+                |> Maybe.withDefault False
     in
+    [ partView "Test 1" (dayModel.part1 dayModel.testInput) dayModel.part1TestExpected
+    , partView "Part 1" part1Answer dayModel.part1Expected
+    ]
+        ++ (if part1Passed then
+                [ partView "Part 2" (dayModel.part2 dayModel.input) dayModel.part2Expected ]
+
+            else
+                []
+           )
+
+
+partView : String -> String -> Maybe String -> Html msg
+partView name answer maybeExpected =
     maybeExpected
         |> Maybe.map (\e -> checkExpected e answer)
         |> Maybe.withDefault answer
