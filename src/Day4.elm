@@ -1,13 +1,13 @@
 module Day4 exposing (main)
 
 import AdventOfCode
-import Browser
 import Dict
 
 
 main =
     AdventOfCode.day
-        { input = inputReal
+        { dayNumber = 4
+        , input = inputReal
         , testInput = inputTest
         , part1 = part1
         , part1TestExpected = Just "2"

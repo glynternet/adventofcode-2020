@@ -7,7 +7,8 @@ import MultiDict
 
 main =
     AdventOfCode.day
-        { input = inputReal
+        { dayNumber = 3
+        , input = inputReal
         , testInput = inputTest
         , part1 = part1
         , part1Expected = Just "265"

@@ -4,6 +4,9 @@
     font-family: "Source Code Pro", monospace;
     font-size: 14pt;
     min-width: 60em;
+}
+
+div.page {
     white-space: pre;
 }
 

@@ -2,14 +2,13 @@ module Day5 exposing (main)
 
 import AdventOfCode
 import Binary
-import Browser
-import Dict
 import Result.Extra as Result
 
 
 main =
     AdventOfCode.day
-        { input = inputReal
+        { dayNumber = 5
+        , input = inputReal
         , testInput = inputTest
         , part1 = part1
         , part1TestExpected = Just "820"

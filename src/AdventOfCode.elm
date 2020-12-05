@@ -15,7 +15,8 @@ day impl =
 
 
 type alias Day model =
-    { input : model
+    { dayNumber : Int
+    , input : model
     , testInput : model
     , part1 : model -> String
     , part1TestExpected : Maybe String
@@ -28,8 +29,9 @@ type alias Day model =
 
 view : Day model -> Html msg
 view dayModel =
-    div []
+    div [ Attributes.class "page" ]
         (css "/style.css"
+            :: div [] [ dayModel.dayNumber |> String.fromInt |> (++) "Day " |> text ]
             :: [ partView "Test 1" dayModel.testInput dayModel.part1 dayModel.part1TestExpected
                , partView "Part 1" dayModel.input dayModel.part1 dayModel.part1Expected
                , partView "Part 2" dayModel.input dayModel.part2 dayModel.part2Expected

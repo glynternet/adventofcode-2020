@@ -1,4 +1,4 @@
-module Day5 exposing (main)
+module DayN exposing (main)
 
 import AdventOfCode
 import Browser
@@ -7,7 +7,8 @@ import Dict
 
 main =
     AdventOfCode.day
-        { input = inputReal
+        { dayNumber = 0
+        , input = inputReal
         , testInput = inputTest
         , part1 = part1
         , part1TestExpected = Nothing
