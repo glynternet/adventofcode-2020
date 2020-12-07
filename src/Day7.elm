@@ -34,6 +34,32 @@ debugWindows =
             |> Result.map (\bagCounts -> List.map bagCountStr bagCounts |> String.join "\t")
             |> Result.Extra.merge
       )
+    , ( Just "All test rules"
+      , allRules inputTest
+            |> (\( errs, rules ) ->
+                    "Errors:\n"
+                        ++ String.join "\n" errs
+                        ++ "\nRules:\n"
+                        ++ (rules
+                                |> List.map
+                                    (\rule -> bagStr rule.bag ++ " -> [" ++ (List.map bagCountStr rule.bagCounts |> String.join ", ") ++ "]")
+                                |> String.join "\n"
+                           )
+               )
+      )
+    , ( Just "All real rules"
+      , allRules inputReal
+            |> (\( errs, rules ) ->
+                    "Errors:\n"
+                        ++ String.join "\n" errs
+                        ++ "\nRules:\n"
+                        ++ (rules
+                                |> List.map
+                                    (\rule -> bagStr rule.bag ++ " -> [" ++ (List.map bagCountStr rule.bagCounts |> String.join ", ") ++ "]")
+                                |> String.join "\n"
+                           )
+               )
+      )
     ]
 
 
@@ -132,18 +158,8 @@ parseWord =
 
 
 part1 : List String -> String
-part1 lines =
-    allRules lines
-        |> (\( errs, rules ) ->
-                "Errors:\n"
-                    ++ String.join "\n" errs
-                    ++ "\nRules:\n"
-                    ++ (rules
-                            |> List.map
-                                (\rule -> bagStr rule.bag ++ " -> [" ++ (List.map bagCountStr rule.bagCounts |> String.join ", ") ++ "]")
-                            |> String.join "\n"
-                       )
-           )
+part1 =
+    List.length >> String.fromInt >> (++) "Rule count: "
 
 
 allRules : List String -> ( List String, List Rule )
