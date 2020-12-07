@@ -2,7 +2,6 @@ module Day7 exposing (main)
 
 import AdventOfCode
 import Dict
-import MultiDict
 import Parser exposing ((|.), (|=), DeadEnd, Parser, Problem(..), int, oneOf, spaces, succeed, token, variable)
 import Result.Extra
 import Set
@@ -14,7 +13,7 @@ main =
         , input = inputReal
         , testInput = inputTest
         , part1 = part1
-        , part1TestExpected = Nothing
+        , part1TestExpected = Just "4"
         , part1Expected = Nothing
         , part2 = part2
         , part2Expected = Nothing
@@ -173,20 +172,13 @@ part1 input =
                 Dict.keys dict
                     |> List.map
                         (\str ->
-                            Dict.get str dict
-                                |> Maybe.map (contentsLeadTo (Bag "shiny" "gold"))
-                                |> Maybe.map
-                                    (\yes ->
-                                        if yes then
-                                            "YES"
-
-                                        else
-                                            "NO"
-                                    )
-                                |> Maybe.withDefault "hiyer"
+                            contentsLeadTo (Bag "shiny" "gold") str dict
                         )
+                    |> List.filter identity
+                    |> List.length
+                    |> String.fromInt
             )
-        |> Result.map (String.join "\n")
+        --|> Result.map (String.join "\n")
         |> Result.Extra.merge
 
 
@@ -194,20 +186,38 @@ part1 input =
 -- TODO going to need to recurse with dictionary here
 
 
-contentsLeadTo : Bag -> List BagCount -> Bool
-contentsLeadTo needle contents =
-    case contents of
-        [] ->
-            False
+contentsLeadTo : Bag -> String -> Dict.Dict String (List BagCount) -> Bool
+contentsLeadTo needle bagName dict =
+    Dict.get bagName dict
+        |> Maybe.map
+            (\contents ->
+                case contents of
+                    [] ->
+                        False
 
-        others ->
-            others
-                |> List.filter
-                    (\( _, bag ) ->
-                        bagStr bag == bagStr needle
-                    )
-                |> List.isEmpty
-                |> not
+                    --_ ->
+                    --    False
+                    others ->
+                        let
+                            thisOneDoes =
+                                others
+                                    |> List.filter
+                                        (\( _, bag ) ->
+                                            bagStr bag == bagStr needle
+                                        )
+                                    |> List.isEmpty
+                                    |> not
+                        in
+                        if thisOneDoes then
+                            True
+
+                        else
+                            --False
+                            others
+                                |> List.map (\( _, otherBag ) -> contentsLeadTo needle (bagStr otherBag) dict)
+                                |> List.any identity
+            )
+        |> Maybe.withDefault False
 
 
 rulesDict : List Rule -> Dict.Dict String (List BagCount)
