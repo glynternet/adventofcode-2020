@@ -14,9 +14,9 @@ main =
         , testInput = inputTest
         , part1 = part1
         , part1TestExpected = Just "4"
-        , part1Expected = Nothing
+        , part1Expected = Just "289"
         , part2 = part2
-        , part2Expected = Nothing
+        , part2Expected = Just "30055"
         , debugWindows = \_ -> debugWindows
         }
 
@@ -268,7 +268,42 @@ allRules lines =
 
 part2 : List String -> String
 part2 input =
-    ""
+    let
+        rulesDdict =
+            input
+                |> allRulesResult
+                |> Result.map rulesDict
+    in
+    case rulesDdict of
+        Err error ->
+            error
+
+        Ok dict ->
+            bagsInsideCount (Bag "shiny" "gold") dict
+                |> Result.map String.fromInt
+                |> Result.Extra.merge
+
+
+bagsInsideCount : Bag -> Dict.Dict String (List BagCount) -> Result String Int
+bagsInsideCount rootBag dict =
+    case Dict.get (bagStr rootBag) dict of
+        Nothing ->
+            Err "Root bag not found"
+
+        Just bagCounts ->
+            case bagCounts of
+                [] ->
+                    Ok 0
+
+                some ->
+                    some
+                        |> List.map
+                            (\( count, bag ) ->
+                                bagsInsideCount bag dict
+                                    |> Result.map (\bagContentsCount -> count + count * bagContentsCount)
+                            )
+                        |> Result.Extra.combine
+                        |> Result.map List.sum
 
 
 inputTest : List String
