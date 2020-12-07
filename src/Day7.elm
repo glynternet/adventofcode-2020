@@ -38,8 +38,14 @@ debugWindows =
 
 
 type alias Rule =
-    { root : String
-    , somethingElse : String
+    { bag : Bag
+    , bagCounts : List BagCount
+    }
+
+
+type alias Bag =
+    { colourMod : String
+    , colour : String
     }
 
 
@@ -47,9 +53,9 @@ type alias BagCount =
     ( Int, Bag )
 
 
-parseRule : Parser ( Bag, List BagCount )
+parseRule : Parser Rule
 parseRule =
-    succeed Tuple.pair
+    succeed Rule
         |= parseBag
         |. spaces
         |. token "bags contain"
@@ -100,12 +106,6 @@ parseBagCount =
             ]
 
 
-type alias Bag =
-    { colourMod : String
-    , colour : String
-    }
-
-
 parseBag : Parser Bag
 parseBag =
     succeed Bag
@@ -132,17 +132,37 @@ parseWord =
 
 
 part1 : List String -> String
-part1 =
-    List.map
-        (\str ->
-            str
-                |> Parser.run parseRule
+part1 lines =
+    allRules lines
+        |> (\( errs, rules ) ->
+                "Errors:\n"
+                    ++ String.join "\n" errs
+                    ++ "\nRules:\n"
+                    ++ (rules
+                            |> List.map
+                                (\rule -> bagStr rule.bag ++ " -> [" ++ (List.map bagCountStr rule.bagCounts |> String.join ", ") ++ "]")
+                            |> String.join "\n"
+                       )
+           )
+
+
+allRules : List String -> ( List String, List Rule )
+allRules lines =
+    lines
+        |> List.map
+            (Parser.run parseRule
                 >> Result.mapError (List.map deadEndToString >> String.join "\n")
-                >> Result.map (\( bag, bagCounts ) -> bagStr bag ++ " " ++ (List.map bagCountStr bagCounts |> String.join "\t"))
-                >> Result.Extra.merge
-                |> (\resStr -> str ++ ": " ++ resStr)
-        )
-        >> String.join "\n"
+            )
+        |> List.foldl
+            (\new ( currentErrs, currentRules ) ->
+                case new of
+                    Err str ->
+                        ( str :: currentErrs, currentRules )
+
+                    Ok rule ->
+                        ( currentErrs, rule :: currentRules )
+            )
+            ( [], [] )
 
 
 part2 : List String -> String
