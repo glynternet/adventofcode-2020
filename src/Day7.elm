@@ -37,7 +37,7 @@ debugWindows =
       )
     , ( Just "All test rules"
       , allRules inputTest
-            |> (\( errs, rules ) ->
+            |> (\( rules, errs ) ->
                     "Errors:\n"
                         ++ String.join "\n" errs
                         ++ "\nRules:\n"
@@ -50,7 +50,7 @@ debugWindows =
       )
     , ( Just "All real rules"
       , allRules inputReal
-            |> (\( errs, rules ) ->
+            |> (\( rules, errs ) ->
                     "Errors:\n"
                         ++ String.join "\n" errs
                         ++ "\nRules:\n"
@@ -97,7 +97,6 @@ parseContents =
 
 contentsHelp : List BagCount -> Parser (Parser.Step (List BagCount) (List BagCount))
 contentsHelp revStmts =
-    --succeed (\stmt -> (Maybe.map (\_ -> Parser.Loop) |> Maybe.withDefault Parser.Done) (maybeToList stmt ++ revStmts))
     oneOf
         [ token ", " |> Parser.map (\_ -> Parser.Loop revStmts)
         , token "." |> Parser.map (\_ -> Parser.Done revStmts)
@@ -178,12 +177,7 @@ part1 input =
                     |> List.length
                     |> String.fromInt
             )
-        --|> Result.map (String.join "\n")
         |> Result.Extra.merge
-
-
-
--- TODO going to need to recurse with dictionary here
 
 
 contentsLeadTo : Bag -> String -> Dict.Dict String (List BagCount) -> Bool
@@ -195,8 +189,6 @@ contentsLeadTo needle bagName dict =
                     [] ->
                         False
 
-                    --_ ->
-                    --    False
                     others ->
                         let
                             thisOneDoes =
@@ -212,7 +204,6 @@ contentsLeadTo needle bagName dict =
                             True
 
                         else
-                            --False
                             others
                                 |> List.map (\( _, otherBag ) -> contentsLeadTo needle (bagStr otherBag) dict)
                                 |> List.any identity
@@ -227,18 +218,11 @@ rulesDict rules =
         |> Dict.fromList
 
 
-
---MultiDict.fromList (\rule -> bagStr rule.bag) rules
---List.length
--->> String.fromInt
--->> (++) "Rule count: "
-
-
 allRulesResult : List String -> Result String (List Rule)
 allRulesResult lines =
     lines
         |> allRules
-        |> (\( errors, rules ) ->
+        |> (\( rules, errors ) ->
                 if List.length errors > 0 then
                     Err (errors |> String.join "\n")
 
@@ -247,23 +231,14 @@ allRulesResult lines =
            )
 
 
-allRules : List String -> ( List String, List Rule )
+allRules : List String -> ( List Rule, List String )
 allRules lines =
     lines
         |> List.map
             (Parser.run parseRule
                 >> Result.mapError (List.map deadEndToString >> String.join "\n")
             )
-        |> List.foldl
-            (\new ( currentErrs, currentRules ) ->
-                case new of
-                    Err str ->
-                        ( str :: currentErrs, currentRules )
-
-                    Ok rule ->
-                        ( currentErrs, rule :: currentRules )
-            )
-            ( [], [] )
+        |> Result.Extra.partition
 
 
 part2 : List String -> String
