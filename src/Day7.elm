@@ -1,6 +1,8 @@
 module Day7 exposing (main)
 
 import AdventOfCode
+import Dict
+import MultiDict
 import Parser exposing ((|.), (|=), DeadEnd, Parser, Problem(..), int, oneOf, spaces, succeed, token, variable)
 import Result.Extra
 import Set
@@ -158,8 +160,81 @@ parseWord =
 
 
 part1 : List String -> String
-part1 =
-    List.length >> String.fromInt >> (++) "Rule count: "
+part1 input =
+    let
+        rulesDdict =
+            input
+                |> allRulesResult
+                |> Result.map rulesDict
+    in
+    rulesDdict
+        |> Result.map
+            (\dict ->
+                Dict.keys dict
+                    |> List.map
+                        (\str ->
+                            Dict.get str dict
+                                |> Maybe.map (contentsLeadTo (Bag "shiny" "gold"))
+                                |> Maybe.map
+                                    (\yes ->
+                                        if yes then
+                                            "YES"
+
+                                        else
+                                            "NO"
+                                    )
+                                |> Maybe.withDefault "hiyer"
+                        )
+            )
+        |> Result.map (String.join "\n")
+        |> Result.Extra.merge
+
+
+
+-- TODO going to need to recurse with dictionary here
+
+
+contentsLeadTo : Bag -> List BagCount -> Bool
+contentsLeadTo needle contents =
+    case contents of
+        [] ->
+            False
+
+        others ->
+            others
+                |> List.filter
+                    (\( _, bag ) ->
+                        bagStr bag == bagStr needle
+                    )
+                |> List.isEmpty
+                |> not
+
+
+rulesDict : List Rule -> Dict.Dict String (List BagCount)
+rulesDict rules =
+    rules
+        |> List.map (\rule -> ( bagStr rule.bag, rule.bagCounts ))
+        |> Dict.fromList
+
+
+
+--MultiDict.fromList (\rule -> bagStr rule.bag) rules
+--List.length
+-->> String.fromInt
+-->> (++) "Rule count: "
+
+
+allRulesResult : List String -> Result String (List Rule)
+allRulesResult lines =
+    lines
+        |> allRules
+        |> (\( errors, rules ) ->
+                if List.length errors > 0 then
+                    Err (errors |> String.join "\n")
+
+                else
+                    Ok rules
+           )
 
 
 allRules : List String -> ( List String, List Rule )
