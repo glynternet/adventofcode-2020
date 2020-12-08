@@ -1,8 +1,6 @@
 module DayN exposing (main)
 
 import AdventOfCode
-import Browser
-import Dict
 
 
 main =
