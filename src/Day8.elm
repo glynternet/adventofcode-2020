@@ -13,9 +13,9 @@ main =
         , testInput = inputTest
         , part1 = part1
         , part1TestExpected = Just "5"
-        , part1Expected = Nothing
+        , part1Expected = Just "2025"
         , part2 = part2
-        , part2Expected = Nothing
+        , part2Expected = Just "2001"
         , debugWindows = \_ -> []
         }
 
@@ -29,15 +29,102 @@ type alias Model =
 part1 : List String -> String
 part1 =
     parseInstructions
-        >> Result.map (doInstructionLoop Nothing Set.empty (Model 0 0))
-        >> Result.map Result.Extra.merge
+        >> Result.map (runDevice Nothing Set.empty (Model 0 0))
+        >> unwrapResult
+        >> Result.map
+            (\seqEnd ->
+                case seqEnd of
+                    InfiniteLoop accumilatorValueBeforeLoop ->
+                        String.fromInt accumilatorValueBeforeLoop
+
+                    _ ->
+                        "Part 1 should reach an InfiniteLoop, not this."
+            )
         >> Result.Extra.merge
 
 
-doInstructionLoop : Maybe Model -> Set.Set Int -> Model -> List ( String, Int ) -> Result String String
-doInstructionLoop previousModel seenIndices currentModel instructions =
+part2 : List String -> String
+part2 input =
+    case input |> parseInstructions of
+        Err errStr ->
+            errStr
+
+        Ok insts ->
+            part2Loop insts 0
+
+
+part2Loop : List ( String, Int ) -> Int -> String
+part2Loop original adjustIndex =
+    case adjustInstructions adjustIndex original of
+        Err str ->
+            str
+
+        Ok adjustedInstructions ->
+            runDevice Nothing Set.empty (Model 0 0) adjustedInstructions
+                |> Result.map
+                    (\seqEnd ->
+                        case seqEnd of
+                            InfiniteLoop _ ->
+                                part2Loop original (adjustIndex + 1)
+
+                            ExitedSuccessfully accum ->
+                                String.fromInt accum
+                    )
+                >> Result.Extra.merge
+
+
+adjustInstructions : Int -> List ( String, Int ) -> Result String (List ( String, Int ))
+adjustInstructions index =
+    List.Extra.splitAt index
+        >> (\( left, right ) ->
+                case right of
+                    [] ->
+                        Ok left
+
+                    el0 :: others ->
+                        replaceInst el0 |> Result.map (\replaced -> List.append left (replaced :: others))
+           )
+
+
+replaceInst : ( String, Int ) -> Result String ( String, Int )
+replaceInst inst =
+    case Tuple.first inst of
+        --probably need to keep this index for when switching with jmp?
+        "nop" ->
+            Ok ( "jmp", Tuple.second inst )
+
+        "acc" ->
+            Ok inst
+
+        "jmp" ->
+            Ok ( "nop", Tuple.second inst )
+
+        other ->
+            Err <| "Could not find instruction for " ++ other ++ "when swapping"
+
+
+unwrapResult : Result err (Result err val) -> Result err val
+unwrapResult res =
+    case res of
+        Err err ->
+            Err err
+
+        Ok val ->
+            val
+
+
+type SequenceEnd
+    = InfiniteLoop Int
+    | ExitedSuccessfully Int
+
+
+runDevice : Maybe Model -> Set.Set Int -> Model -> List ( String, Int ) -> Result String SequenceEnd
+runDevice previousModel seenIndices currentModel instructions =
     if Set.member currentModel.index seenIndices then
-        Ok <| (previousModel |> Maybe.map (.accum >> String.fromInt) |> Maybe.withDefault "Somehow ended on no previous index")
+        previousModel |> Maybe.map (.accum >> InfiniteLoop >> Ok) |> Maybe.withDefault (Err "Somehow ended on no previous index")
+
+    else if currentModel.index == List.length instructions then
+        Ok <| ExitedSuccessfully currentModel.accum
 
     else
         case doInstruction currentModel instructions of
@@ -45,7 +132,7 @@ doInstructionLoop previousModel seenIndices currentModel instructions =
                 Err err
 
             Ok newModel ->
-                doInstructionLoop (Just currentModel) (Set.insert currentModel.index seenIndices) newModel instructions
+                runDevice (Just currentModel) (Set.insert currentModel.index seenIndices) newModel instructions
 
 
 doInstruction : Model -> List ( String, Int ) -> Result String Model
@@ -57,7 +144,7 @@ doInstruction model instructions =
 getInstruction : Int -> List ( String, Int ) -> Result String (Model -> Model)
 getInstruction index instrs =
     List.Extra.getAt index instrs
-        |> Result.fromMaybe "No instruction at index"
+        |> Result.fromMaybe ("No instruction at index: " ++ String.fromInt index)
         |> Result.map instr
         |> (\outerRes ->
                 case outerRes of
@@ -101,18 +188,6 @@ parseInstruction str =
 
         _ ->
             Err "Expected two parts to instruction"
-
-
-part2 : List String -> String
-part2 input =
-    ""
-
-
-{-| nop returns number to increase index by
--}
-nop : Int
-nop =
-    1
 
 
 inputTest : List String
