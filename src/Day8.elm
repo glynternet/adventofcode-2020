@@ -30,7 +30,7 @@ part1 : List String -> String
 part1 =
     parseInstructions
         >> Result.map (runDevice Nothing Set.empty (Model 0 0))
-        >> unwrapResult
+        >> Result.Extra.join
         >> Result.map
             (\seqEnd ->
                 case seqEnd of
@@ -101,16 +101,6 @@ replaceInst inst =
 
         other ->
             Err <| "Could not find instruction for " ++ other ++ "when swapping"
-
-
-unwrapResult : Result err (Result err val) -> Result err val
-unwrapResult res =
-    case res of
-        Err err ->
-            Err err
-
-        Ok val ->
-            val
 
 
 type SequenceEnd
