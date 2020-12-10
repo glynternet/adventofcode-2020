@@ -23,6 +23,7 @@ type alias Day model =
     , part1Expected : Maybe String
     , part2 : model -> String
     , part2Expected : Maybe String
+    , part2TestExpected : Maybe String
     , debugWindows : model -> List ( Maybe String, String )
     }
 
@@ -63,7 +64,9 @@ partViews dayModel =
     , partView "Part 1" part1Answer dayModel.part1Expected
     ]
         ++ (if part1Passed then
-                [ partView "Part 2" (dayModel.part2 dayModel.input) dayModel.part2Expected ]
+                [ partView "Test 2" (dayModel.part2 dayModel.testInput) dayModel.part2TestExpected
+                , partView "Part 2" (dayModel.part2 dayModel.input) dayModel.part2Expected
+                ]
 
             else
                 []

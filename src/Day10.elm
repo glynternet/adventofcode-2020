@@ -1,6 +1,7 @@
 module Day10 exposing (main)
 
 import AdventOfCode
+import List.Extra
 import Result.Extra
 
 
@@ -10,9 +11,9 @@ main =
         , input = processInputString inputReal
         , testInput = processInputString inputTest
         , part1 = part1
-        , part1TestExpected = Nothing
-        , part1Expected = Nothing
-        , part2 = part2
+        , part1TestExpected = Just "35"
+        , part1Expected = Just "2210"
+        , part2 = part2Res
         , part2Expected = Nothing
         , debugWindows = \_ -> []
         }
@@ -50,7 +51,6 @@ part1 input =
                     -- always a 3 volt different at end for my device
                     (Ok ( 0, 0, 1 ))
                 |> Result.map (\( last, count1, count3 ) -> String.fromInt (count1 * count3))
-                --|> Result.map (\( last, count1, count3 ) -> String.fromInt count1 ++ "\t" ++ String.fromInt count3)
                 |> Result.Extra.merge
 
 
@@ -63,9 +63,45 @@ part1 input =
 --        [] -> 0
 
 
-part2 : Result String (List Int) -> String
+part2Res : Result String (List Int) -> String
+part2Res input =
+    case input of
+        Err err ->
+            err
+
+        Ok ints ->
+            part2 ints
+
+
+part2 : List Int -> String
 part2 input =
-    ""
+    case List.maximum input of
+        Nothing ->
+            "No max"
+
+        Just max ->
+            part2Loop (0 :: input ++ [ max + 3 ]) |> String.fromInt
+
+
+part2Loop : List Int -> Int
+part2Loop joltages =
+    case joltages of
+        [] ->
+            0
+
+        [ a ] ->
+            1
+
+        [ a, b ] ->
+            if b - a < 3 then
+                1
+
+            else
+                0
+
+        a :: others ->
+            (others |> List.Extra.takeWhile (\el -> (el - a) <= 3) |> List.length)
+                + part2Loop others
 
 
 processInputString : List String -> Result String (List Int)
