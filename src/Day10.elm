@@ -1,7 +1,7 @@
 module Day10 exposing (main)
 
 import AdventOfCode
-import List.Extra
+import Dict
 import Result.Extra
 
 
@@ -14,7 +14,8 @@ main =
         , part1TestExpected = Just "35"
         , part1Expected = Just "2210"
         , part2 = part2Res
-        , part2Expected = Nothing
+        , part2TestExpected = Just "8"
+        , part2Expected = Just "7086739046912"
         , debugWindows = \_ -> []
         }
 
@@ -54,15 +55,6 @@ part1 input =
                 |> Result.Extra.merge
 
 
-
---|> List.length
---|> String.fromInt
---part1Loop : List Int
---part1Loop list =
---    case list of
---        [] -> 0
-
-
 part2Res : Result String (List Int) -> String
 part2Res input =
     case input of
@@ -80,28 +72,51 @@ part2 input =
             "No max"
 
         Just max ->
-            part2Loop (0 :: input ++ [ max + 3 ]) |> String.fromInt
+            let
+                voltageList =
+                    List.sort input ++ [ max + 3 ]
+            in
+            part2Loop (Debug.log "startDict" (Dict.insert 0 1 Dict.empty))
+                (Debug.log "list " voltageList)
+                |> Result.map String.fromInt
+                |> Result.Extra.merge
 
 
-part2Loop : List Int -> Int
-part2Loop joltages =
+part2Loop : Dict.Dict Int Int -> List Int -> Result String Int
+part2Loop currentPaths joltages =
+    let
+        _ =
+            Debug.log "currentPaths" currentPaths
+    in
     case joltages of
         [] ->
-            0
+            Dict.keys currentPaths
+                |> List.sort
+                |> List.maximum
+                |> Result.fromMaybe "No max?!"
+                |> Result.map (\max -> Dict.get max currentPaths |> Result.fromMaybe "Max not in paths")
+                |> Result.Extra.join
 
-        [ a ] ->
-            1
+        lowest :: others ->
+            [ 1, 2, 3 ]
+                |> List.map (\sub -> lowest - sub)
+                |> List.map (\key -> Debug.log (String.fromInt key) (Dict.get key currentPaths) |> Maybe.withDefault 0)
+                |> List.sum
+                |> (\sum -> part2Loop (Dict.insert lowest sum currentPaths) others)
 
-        [ a, b ] ->
-            if b - a < 3 then
-                1
 
-            else
-                0
+listsStartingBelowOrAt : Int -> List Int -> List (List Int)
+listsStartingBelowOrAt n list =
+    case list of
+        [] ->
+            []
 
         a :: others ->
-            (others |> List.Extra.takeWhile (\el -> (el - a) <= 3) |> List.length)
-                + part2Loop others
+            if a < n then
+                [ a :: others ] ++ listsStartingBelowOrAt n others
+
+            else
+                []
 
 
 processInputString : List String -> Result String (List Int)
