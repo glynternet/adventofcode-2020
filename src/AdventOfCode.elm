@@ -52,6 +52,14 @@ view dayModel =
 partViews : Day model -> List (Html msg)
 partViews dayModel =
     let
+        test1Answer =
+            dayModel.part1 dayModel.testInput
+
+        test1Passed =
+            dayModel.part1TestExpected
+                |> Maybe.map (\expected -> expected == test1Answer)
+                |> Maybe.withDefault False
+
         part1Answer =
             dayModel.part1 dayModel.input
 
@@ -60,17 +68,19 @@ partViews dayModel =
                 |> Maybe.map (\expected -> expected == part1Answer)
                 |> Maybe.withDefault False
     in
-    [ partView "Test 1" (dayModel.part1 dayModel.testInput) dayModel.part1TestExpected
-    , partView "Part 1" part1Answer dayModel.part1Expected
-    ]
-        ++ (if part1Passed then
-                [ partView "Test 2" (dayModel.part2 dayModel.testInput) dayModel.part2TestExpected
-                , partView "Part 2" (dayModel.part2 dayModel.input) dayModel.part2Expected
-                ]
+    [ partView "Test 1" test1Answer dayModel.part1TestExpected ]
+        ++ conditionallyDisplay test1Passed (\_ -> partView "Part 1" part1Answer dayModel.part1Expected)
+        ++ conditionallyDisplay part1Passed (\_ -> partView "Test 2" (dayModel.part2 dayModel.testInput) dayModel.part2TestExpected)
+        ++ conditionallyDisplay part1Passed (\_ -> partView "Part 2" (dayModel.part2 dayModel.input) dayModel.part2Expected)
 
-            else
-                []
-           )
+
+conditionallyDisplay : Bool -> (() -> Html msg) -> List (Html msg)
+conditionallyDisplay show el =
+    if show then
+        [ el () ]
+
+    else
+        []
 
 
 partView : String -> String -> Maybe String -> Html msg
