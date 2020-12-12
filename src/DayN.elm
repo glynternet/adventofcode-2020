@@ -12,6 +12,7 @@ main =
         , part1TestExpected = Nothing
         , part1Expected = Nothing
         , part2 = part2
+        , part2TestExpected = Nothing
         , part2Expected = Nothing
         , debugWindows = \_ -> []
         }
