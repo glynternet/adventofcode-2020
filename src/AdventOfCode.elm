@@ -50,37 +50,46 @@ view dayModel =
 
 
 partViews : Day model -> List (Html msg)
-partViews dayModel =
-    let
-        test1Answer =
-            dayModel.part1 dayModel.testInput
+partViews =
+    cases
+        >> List.foldl
+            (\case_ ( lastPassed, elements ) ->
+                if not lastPassed then
+                    ( False, elements )
 
-        test1Passed =
-            dayModel.part1TestExpected
-                |> Maybe.map (\expected -> expected == test1Answer)
-                |> Maybe.withDefault False
-
-        part1Answer =
-            dayModel.part1 dayModel.input
-
-        part1Passed =
-            dayModel.part1Expected
-                |> Maybe.map (\expected -> expected == part1Answer)
-                |> Maybe.withDefault False
-    in
-    [ partView "Test 1" test1Answer dayModel.part1TestExpected ]
-        ++ conditionallyDisplay test1Passed (\_ -> partView "Part 1" part1Answer dayModel.part1Expected)
-        ++ conditionallyDisplay part1Passed (\_ -> partView "Test 2" (dayModel.part2 dayModel.testInput) dayModel.part2TestExpected)
-        ++ conditionallyDisplay part1Passed (\_ -> partView "Part 2" (dayModel.part2 dayModel.input) dayModel.part2Expected)
+                else
+                    let
+                        answer =
+                            case_.solution case_.model
+                    in
+                    ( pass answer case_.expected, partView case_.name answer case_.expected :: elements )
+            )
+            ( True, [] )
+        >> Tuple.mapSecond List.reverse
+        >> Tuple.second
 
 
-conditionallyDisplay : Bool -> (() -> Html msg) -> List (Html msg)
-conditionallyDisplay show el =
-    if show then
-        [ el () ]
+type alias Case model =
+    { name : String
+    , solution : model -> String
+    , model : model
+    , expected : Maybe String
+    }
 
-    else
-        []
+
+cases : Day model -> List (Case model)
+cases dayModel =
+    [ Case "Test 1" dayModel.part1 dayModel.testInput dayModel.part1TestExpected
+    , Case "Part 1" dayModel.part1 dayModel.input dayModel.part1Expected
+    , Case "Test 2" dayModel.part2 dayModel.testInput dayModel.part2TestExpected
+    , Case "Part 2" dayModel.part2 dayModel.input dayModel.part2Expected
+    ]
+
+
+pass : String -> Maybe String -> Bool
+pass answer =
+    Maybe.map ((==) answer)
+        >> Maybe.withDefault False
 
 
 partView : String -> String -> Maybe String -> Html msg
