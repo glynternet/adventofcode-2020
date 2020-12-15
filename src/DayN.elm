@@ -8,6 +8,7 @@ main =
         { dayNumber = 0
         , input = inputReal
         , testInput = inputTest
+        , processInput = processInput
         , part1 = part1
         , part1TestExpected = Nothing
         , part1Expected = Nothing
@@ -28,12 +29,16 @@ part2 input =
     ""
 
 
-inputTest : List String
+processInput : String -> Result String (List String)
+processInput =
+    String.lines >> Ok
+
+
+inputTest : String
 inputTest =
-    String.split "\n"
-        """"""
+    """"""
 
 
-inputReal : List String
+inputReal : String
 inputReal =
-    String.split "\n" """"""
+    """"""

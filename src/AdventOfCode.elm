@@ -16,8 +16,9 @@ day impl =
 
 type alias Day model =
     { dayNumber : Int
-    , input : model
-    , testInput : model
+    , input : String
+    , testInput : String
+    , processInput : String -> Result String model
     , part1 : model -> String
     , part1TestExpected : Maybe String
     , part1Expected : Maybe String
@@ -33,25 +34,36 @@ view dayModel =
     div [ Attributes.class "page" ]
         (css "/style.css"
             :: div [] [ dayModel.dayNumber |> String.fromInt |> (++) "Day " |> text ]
-            :: partViews dayModel
-            ++ (dayModel.debugWindows dayModel.input
-                    |> List.map
-                        (\( title, str ) ->
-                            div []
-                                ((title
-                                    |> Maybe.map (\t -> [ text t, Html.br [] [] ])
-                                    |> Maybe.withDefault []
-                                 )
-                                    ++ [ text <| str ]
-                                )
-                        )
+            :: (case dayModel.processInput dayModel.testInput of
+                    Err err ->
+                        [ div [] [ text <| "Error processing test input: " ++ err ] ]
+
+                    Ok testModel ->
+                        case dayModel.processInput dayModel.input of
+                            Err err ->
+                                [ div [] [ text <| "Error processing real input: " ++ err ] ]
+
+                            Ok realModel ->
+                                partViews ( testModel, realModel ) dayModel
+                                    ++ (dayModel.debugWindows testModel
+                                            |> List.map
+                                                (\( title, str ) ->
+                                                    div []
+                                                        ((title
+                                                            |> Maybe.map (\t -> [ text t, Html.br [] [] ])
+                                                            |> Maybe.withDefault []
+                                                         )
+                                                            ++ [ text <| str ]
+                                                        )
+                                                )
+                                       )
                )
         )
 
 
-partViews : Day model -> List (Html msg)
-partViews =
-    cases
+partViews : ( model, model ) -> Day model -> List (Html msg)
+partViews models =
+    cases models
         >> List.foldl
             (\case_ ( lastPassed, elements ) ->
                 if not lastPassed then
@@ -77,12 +89,12 @@ type alias Case model =
     }
 
 
-cases : Day model -> List (Case model)
-cases dayModel =
-    [ Case "Test 1" dayModel.part1 dayModel.testInput dayModel.part1TestExpected
-    , Case "Part 1" dayModel.part1 dayModel.input dayModel.part1Expected
-    , Case "Test 2" dayModel.part2 dayModel.testInput dayModel.part2TestExpected
-    , Case "Part 2" dayModel.part2 dayModel.input dayModel.part2Expected
+cases : ( model, model ) -> Day model -> List (Case model)
+cases ( testModel, realModel ) dayModel =
+    [ Case "Test 1" dayModel.part1 testModel dayModel.part1TestExpected
+    , Case "Part 1" dayModel.part1 realModel dayModel.part1Expected
+    , Case "Test 2" dayModel.part2 testModel dayModel.part2TestExpected
+    , Case "Part 2" dayModel.part2 realModel dayModel.part2Expected
     ]
 
 
