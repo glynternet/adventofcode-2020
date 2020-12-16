@@ -1,6 +1,7 @@
 module Day16 exposing (main)
 
 import AdventOfCode
+import Grid
 import Result.Extra
 
 
@@ -8,14 +9,17 @@ main =
     AdventOfCode.day
         { dayNumber = 16
         , input = inputReal
+        , processInput = Ok
         , testInput = inputTest
         , part1 = part1
         , part1TestExpected = Just "71"
         , part1Expected = Just "27911"
         , part2 = part2
-        , part2TestExpected = Nothing
-        , part2Expected = Nothing
-        , debugWindows = \_ -> []
+        , part2TestExpected = Just """(0,["class","row"])
+(1,["class"])
+(2,["seat"])"""
+        , part2Expected = Just "737176602479"
+        , debugWindows = \_ -> [ ( Just "Debuggin'", part2 inputTest2 ) ]
         }
 
 
@@ -44,8 +48,62 @@ part1 ( rulesRes, mine, others ) =
 
 
 part2 : InputModel -> String
-part2 input =
-    ""
+part2 ( rulesRes, min, others ) =
+    case rulesRes of
+        Err err ->
+            err
+
+        Ok rules ->
+            let
+                allRules =
+                    rules |> List.map Tuple.second |> List.concat
+
+                otherValidRules =
+                    others
+                        |> List.filter
+                            (\ticketValues ->
+                                ticketValues
+                                    |> List.all
+                                        (\val ->
+                                            List.any (\pred -> pred val) allRules
+                                        )
+                            )
+
+                columnsRes =
+                    Grid.fromLists otherValidRules |> Grid.columns
+            in
+            case columnsRes of
+                Err err ->
+                    err
+
+                Ok columns ->
+                    columns
+                        |> List.map
+                            (\columnNums ->
+                                rules
+                                    |> List.filter
+                                        (\( name, rulePredicates ) ->
+                                            let
+                                                match =
+                                                    Debug.log "match" <| allValuesMatchAnyPredicates columnNums rulePredicates
+                                            in
+                                            match
+                                        )
+                                    |> List.map Tuple.first
+                            )
+                        |> List.indexedMap (\i v -> ( i, v ))
+                        |> List.map Debug.toString
+                        |> String.join "\n"
+
+
+allValuesMatchAnyPredicates : List a -> List (a -> Bool) -> Bool
+allValuesMatchAnyPredicates vals preds =
+    List.all (anyPredicatesMatch preds) vals
+
+
+anyPredicatesMatch : List (a -> Bool) -> (a -> Bool)
+anyPredicatesMatch preds =
+    \val -> List.any (\pred -> pred val) preds
 
 
 parseRulesStr : String -> Result String (List ( String, List (Int -> Bool) ))
@@ -94,6 +152,19 @@ parseRuleStr str =
 
         _ ->
             Err "Expected two parts but didn't get them"
+
+
+inputTest2 : InputModel
+inputTest2 =
+    ( parseRulesStr """class: 0-1 or 4-19
+row: 0-5 or 8-19
+seat: 0-13 or 16-19"""
+    , [ 11, 12, 13 ]
+    , [ [ 3, 9, 18 ]
+      , [ 15, 1, 5 ]
+      , [ 5, 14, 9 ]
+      ]
+    )
 
 
 inputTest : InputModel

@@ -5,7 +5,7 @@ import Html exposing (Html, div, text)
 import Html.Attributes as Attributes
 
 
-day : Day model -> Program () (Day model) msg
+day : Day inputModel model -> Program () (Day inputModel model) msg
 day impl =
     Browser.sandbox
         { init = impl
@@ -14,11 +14,11 @@ day impl =
         }
 
 
-type alias Day model =
+type alias Day inputModel model =
     { dayNumber : Int
-    , input : String
-    , testInput : String
-    , processInput : String -> Result String model
+    , input : inputModel
+    , testInput : inputModel
+    , processInput : inputModel -> Result String model
     , part1 : model -> String
     , part1TestExpected : Maybe String
     , part1Expected : Maybe String
@@ -29,7 +29,7 @@ type alias Day model =
     }
 
 
-view : Day model -> Html msg
+view : Day inputModel model -> Html msg
 view dayModel =
     div [ Attributes.class "page" ]
         (css "/style.css"
@@ -61,7 +61,7 @@ view dayModel =
         )
 
 
-partViews : ( model, model ) -> Day model -> List (Html msg)
+partViews : ( model, model ) -> Day inputModel model -> List (Html msg)
 partViews models =
     cases models
         >> List.foldl
@@ -89,7 +89,7 @@ type alias Case model =
     }
 
 
-cases : ( model, model ) -> Day model -> List (Case model)
+cases : ( model, model ) -> Day inputModel model -> List (Case model)
 cases ( testModel, realModel ) dayModel =
     [ Case "Test 1" dayModel.part1 testModel dayModel.part1TestExpected
     , Case "Part 1" dayModel.part1 realModel dayModel.part1Expected

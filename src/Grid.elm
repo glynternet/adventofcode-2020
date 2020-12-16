@@ -1,6 +1,7 @@
 module Grid exposing (..)
 
 import Array
+import Result.Extra
 
 
 type alias Grid a =
@@ -39,3 +40,20 @@ get x y grid =
 values : Grid a -> List a
 values =
     Array.toList >> List.map Array.toList >> List.concat
+
+
+columns : Grid a -> Result String (List (List a))
+columns grid =
+    let
+        maxColumns =
+            Array.map Array.length grid |> Array.toList |> List.maximum |> Maybe.withDefault 0
+    in
+    List.range 0 (maxColumns - 1)
+        |> List.map
+            (\colNum ->
+                grid
+                    |> Array.map (Array.get colNum >> Result.fromMaybe "No column for row")
+                    |> Array.toList
+                    |> Result.Extra.combine
+            )
+        |> Result.Extra.combine
