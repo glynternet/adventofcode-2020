@@ -2,7 +2,6 @@ module Day16 exposing (main)
 
 import AdventOfCode
 import Result.Extra
-import Set
 
 
 main =
@@ -21,7 +20,7 @@ main =
 
 
 type alias InputModel =
-    ( Result String (List ( String, List ( Int, Int ) )), List Int, List (List Int) )
+    ( Result String (List ( String, List (Int -> Bool) )), List Int, List (List Int) )
 
 
 part1 : InputModel -> String
@@ -32,32 +31,16 @@ part1 ( rulesRes, mine, others ) =
 
         Ok rules ->
             let
-                validValuesSet =
-                    List.foldl
-                        (\( _, valuePairs ) allValidValues ->
-                            List.foldl
-                                (\( start, end ) accum ->
-                                    List.range start end
-                                        |> List.foldl (\num rangeAccum -> Set.insert num rangeAccum) accum
-                                )
-                                allValidValues
-                                valuePairs
-                        )
-                        Set.empty
-                        rules
+                allRules =
+                    rules |> List.map Tuple.second |> List.concat
 
-                allOtherTickerValues =
+                allOtherTicketValues =
                     others |> List.concat
             in
-            allOtherTickerValues
-                |> List.filter (\val -> not (Set.member val validValuesSet))
+            allOtherTicketValues
+                |> List.filter (\val -> List.all (\pred -> not <| pred val) allRules)
                 |> List.sum
                 |> String.fromInt
-
-
-
---validValuesSet
---    |> Debug.toString
 
 
 part2 : InputModel -> String
@@ -65,7 +48,7 @@ part2 input =
     ""
 
 
-parseRulesStr : String -> Result String (List ( String, List ( Int, Int ) ))
+parseRulesStr : String -> Result String (List ( String, List (Int -> Bool) ))
 parseRulesStr str =
     String.lines str
         |> List.map (String.split ": ")
@@ -83,7 +66,7 @@ parseRulesStr str =
             (List.map
                 (Tuple.mapSecond
                     (String.split " or "
-                        >> List.map parseRuleStr
+                        >> List.map (parseRuleStr >> Result.map (\( start, end ) -> \num -> num >= start && num <= end))
                         >> Result.Extra.combine
                     )
                     >> Result.Extra.combineSecond
